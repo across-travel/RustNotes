@@ -19,7 +19,8 @@ private static final String FILE_CSV = "about_data.csv";
 ```
 
 ## 写CSV文件
-使用`FileOutputStream`来向文件尾部添加数据
+使用`FileOutputStream`来向文件尾部添加数据  
+`FileOutputStream.write(byte[] data)`向文件流写入字节数据。
 
 ```java
 class WriteData2CSVThread extends Thread {

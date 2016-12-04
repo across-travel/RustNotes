@@ -19,3 +19,10 @@ activity，各个页面生命周期不同。增设一个消息管理Service，�
 新的工程只需要引入aar文件即可。
 
 模块化后，代码层级和逻辑更清晰，耦合度下降，更易维护。
+
+### xml中找不到module中的自定义view
+Android Studio 2.2.3 
+
+模块的build和调用方的build的配置要一致，最好全部配置成一样的。
+
+比如compileSdkVersion等等。然后重新make module和rebuild project

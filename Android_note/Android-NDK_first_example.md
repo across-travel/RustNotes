@@ -1,15 +1,15 @@
 ---
-title: Android NDK 简单示例-加法，返回字符串，返回数组；兼容性问题
+title: Android NDK 示例-返回字符串，数组，Java对象；兼容性问题
 date: 2016-08-02 8:08:16
 category: Android_note
 tag: [NDK]
 toc: true
 ---
 
-Android Studio 2.1 创建工程 NDKProj
+Android Studio 2.2.3 创建工程 NDKProj
 
 ## 工程结构：  
-Java文件；在`SmartAlgorithm.java `中引用了JNI
+在`SmartAlgorithm.java`中加载了库文件
 ```
 java
 `-- com
@@ -117,7 +117,7 @@ JNIEXPORT jint JNICALL Java_com_rustfisher_ndkproj_SmartAlgorithm_add
 ```
 
 编写源文件，实现头文件中的方法。一个是返回字符串，一个是加法。
-```
+```c
 #include <jni.h>
 #include <string.h>
 #include <android/log.h>
@@ -188,7 +188,7 @@ com.rustfisher.ndkproj D/MainActivity: onCreate: 3
 public native short[] getConvertedArray(short[] data, int dataLen);
 ```
 
-```cpp
+```c
 JNIEXPORT jshortArray JNICALL Java_com_rustfisher_ndkproj_SmartAlgorithm_getConvertedArray(JNIEnv *env, jobject obj, jshortArray input, jint len) {
     jshort* inputPtr;
     inputPtr = env->GetShortArrayElements(input,0);// 直接操作指针会改变Android Dalvik中的值
@@ -205,6 +205,185 @@ JNIEXPORT jshortArray JNICALL Java_com_rustfisher_ndkproj_SmartAlgorithm_getConv
     env->ReleaseShortArrayElements(result, resPtr, 0);// 释放本地引用
     return result;// 返回结果
 }
+```
+
+#### JNI层 unsigned char 与 jbyte 数组转换
+本例说明的是unsigned char 与 jbyte之间互相转换  
+注意方法：`(*env)->SetByteArrayRegion(env, jbyte_arr, 0, len, uc_ptr);`  
+java代码
+```java
+    public byte[] getByteArrayFromJNI() {
+        return nativeGetByteArray();
+    }
+    public byte[] byteArrayTravelJNI(byte[] input) {
+        return nativeSendByteArray(input, input.length);
+    }
+    private native byte[] nativeGetByteArray(); // 从JNI中获取byte数组
+    
+    // 输入byte数组，在JNI中转换后再获取回来
+    private native byte[] nativeSendByteArray(byte[] input, int len);
+```
+
+JNI代码
+```c
+// return byte array from unsigned char array.  jbytes:  1 2 0 7f 80 81 ff 0 1
+JNIEXPORT jbyteArray JNICALL Java_com_rustfisher_ndkalgo_NDKUtils_nativeGetByteArray(JNIEnv *env, jobject jObj)
+{
+    unsigned char uc_arr[] = {1, -2, 0, 127, 128, 129, 255, 256, 257};
+    int uc_arr_len = sizeof(uc_arr) / sizeof(uc_arr[0]);
+    jbyte byte_array[uc_arr_len];
+    int i = 0;
+    for(;i < uc_arr_len; i++) {
+        byte_array[i] = uc_arr[i];
+    }
+    jbyteArray jbyte_arr = (*env)->NewByteArray(env, uc_arr_len);
+    (*env)->SetByteArrayRegion(env, jbyte_arr, 0, uc_arr_len, byte_array);
+    return jbyte_arr;
+}
+
+// jbyte -> unsigned char -> jbyte
+JNIEXPORT jbyteArray JNICALL Java_com_rustfisher_ndkalgo_NDKUtils_nativeSendByteArray
+    (JNIEnv *env, jobject jObj, jbyteArray input_byte_arr, jint input_len)
+{
+    int len = (int)input_len;
+    jbyte *jbyte_ptr = (*env)->GetByteArrayElements(env, input_byte_arr, 0);
+
+    unsigned char *uc_ptr = (unsigned char *)jbyte_ptr;
+
+    jbyteArray jbyte_arr = (*env)->NewByteArray(env, len);
+    jbyte byte_array[input_len];
+    int i = 0;
+    for(;i < input_len; i++) {
+        byte_array[i] = uc_ptr[i];
+    }
+    (*env)->SetByteArrayRegion(env, jbyte_arr, 0, len, byte_array);
+    (*env)->ReleaseByteArrayElements(env, input_byte_arr, jbyte_ptr, 0);
+    return jbyte_arr;
+}
+```
+
+关于`SetByteArrayRegion`这个方法  
+方法说明：`void SetXxxArrayRegion(JNIEnv *env, jarray array, jint start, jint length, Xxx elems[])`  
+将C数组的元素复制到Java数组中。注意最后一个参数要和前面的对应上。
+
+`void ReleaseXxxArrayElements(JNIEnv *env, jarray array, Xxx elems[], jint mode)`  
+通知虚拟机通过GetXxxArrayElements获得的一个指针已经不再需要了。Mode是0，更新数组
+元素后释放elems缓存。
+
+在这里遇到过一个bug，同样的代码在armeabi上正常运行，但是到了v7a或v8a平台上就闪退。  
+使用`SetXxxArrayRegion`这个方法时，传入的参数一定要和方法名中的`Xxx`对应上  
+详细可以参考*Core Java*中的Java Native和Android Develop上关于abi的解释
+
+测试调用
+```java
+NDKUtils ndkUtils = new NDKUtils();
+byte[] res = ndkUtils.getByteArrayFromJNI(); // 从JNI中获取byte数组
+logBytes(res);
+Log.d(TAG, "-------------------------------------------------------------");
+byte[] inputBytes = new byte[]{1, 2, 127, (byte) 128, (byte) 255, -120};
+byte[] tRes = ndkUtils.byteArrayTravelJNI(inputBytes); // 让byte数组在JNI中旅游一圈
+logBytes(inputBytes);
+logBytes(tRes);
+```
+
+输出
+```
+bytes:  1 2 0 7f 80 81 ff 0 1 
+-------------------------------------------------------------
+bytes:  1 2 7f 80 ff 88 
+bytes:  1 2 7f 80 ff 88 
+```
+
+#### 直接操作输入的数组
+以int数组为例  
+输入一个数组后，获取数组然后直接改变数组中的元素，最后释放掉本地引用
+
+```c
+JNIEXPORT void JNICALL Java_com_rustfisher_ndkalgo_NDKUtils_nativeModifyArray
+  (JNIEnv *env, jobject jObj, jintArray input_arr, jint input_len) {
+    int * input_ptr = (*env)->GetIntArrayElements(env, input_arr, 0);
+    input_ptr[input_len - 1] =  input_ptr[input_len - 1] - 1;
+    (*env)->ReleaseIntArrayElements(env, input_arr, input_ptr, 0);
+  }
+```
+
+```java
+    NDKUtils moUtil = new NDKUtils();
+    int[] origin = new int[]{1, 2, 3, 4, 5, 6, 7};
+    Log.d(TAG, "origin before: " + Arrays.toString(origin));
+    moUtil.modifyArray(origin);
+    Log.d(TAG, "origin after:  " + Arrays.toString(origin));
+```
+
+观察输出可以看出，输入的数组直接被改变了
+```
+origin before: [1, 2, 3, 4, 5, 6, 7]
+origin after:  [1, 2, 3, 4, 5, 6, 6]
+```
+
+### 返回Java对象
+NDK中可以创建Java对象并返回。  
+例如我们新建一个`JavaUser`类。
+```java
+public class JavaUser {
+    private int age;
+    private String name;
+
+    public JavaUser(int age, String name) {
+        this.age = age;
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name + ", " + age;
+    }
+}
+```
+
+native方法返回一个JavaUser对象  
+```java
+public class NDKUtils {
+
+    static {
+        System.loadLibrary("NDKMan");
+    }
+
+    public JavaUser createUser(int age, String name) {
+        return nativeGetUser(age, name);
+    }
+
+    private native JavaUser nativeGetUser(int age, String name);
+
+}
+```
+
+c文件实现代码。注意参数签名的写法，要参照标准。
+```c
+JNIEXPORT jobject JNICALL Java_com_rustfisher_ndkalgo_NDKUtils_nativeGetUser
+    (JNIEnv *env, jobject jObj, jint age, jstring name)
+{
+    jclass userClass = (*env)->FindClass(env, "com/rustfisher/ndkalgo/JavaUser");
+    jmethodID userConstruct = (*env)->GetMethodID(env, userClass, "<init>", "(ILjava/lang/String;)V");
+    return (*env)->NewObject(env, userClass, userConstruct, age, name);
+}
+```
+
+调用native方法生成对象
+```java
+    private void testJavaUserNDK() {
+        NDKUtils ndkUtils = new NDKUtils();
+        JavaUser tom = ndkUtils.createUser(20, "Tom");
+        Log.d(TAG, tom.toString());
+    }
 ```
 
 ### NDK兼容性问题
