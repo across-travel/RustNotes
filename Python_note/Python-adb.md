@@ -66,3 +66,21 @@ class Adb(object):
 ```
 `some_adb_cmd`方法执行一连串的命令。各个命令之间用`&&`连接。
 接着是一个死循环，将执行结果打印出来。
+
+### subprocess 说明
+`creationflags=CREATE_NEW_CONSOLE`在执行指令时弹出一个新的cmd窗口
+
+可以执行指定的bat脚本
+
+```python
+from _subprocess import CREATE_NEW_CONSOLE
+from subprocess import Popen
+
+    def _click_new_cmd_window_btn(self):
+        self.log.info("click_new_cmd_window_btn")
+        Popen('cmd', creationflags=CREATE_NEW_CONSOLE)
+
+    def _click_exe_bat_btn1(self):
+        self.log.info("run bat")
+        Popen('C:\MYDIR\_debug.bat', creationflags=CREATE_NEW_CONSOLE)
+```
