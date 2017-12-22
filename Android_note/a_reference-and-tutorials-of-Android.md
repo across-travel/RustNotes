@@ -95,6 +95,7 @@ https://www.gitbook.com/book/izobs/android-framework-development-guide
 - [ ] okhttp原理
 - [ ] Glide原理
 - [ ] Retrofit原理
+- [ ] Andorid 一张图片的显示过程
 
 ### Android OpenGL ES
 * 使用OpenGL的Android库 https://github.com/Rajawali/Rajawali 
