@@ -17,3 +17,4 @@ PPS Picture Paramater Set，图像参数集。
 ## 参考
 * [H264码流中SPS PPS详解 - DaveBobo](https://zhuanlan.zhihu.com/p/27896239)
 * [H.264先进的视频编译码标准 - CSDN](http://blog.csdn.net/gl1987807/article/details/11945357)
+* [RGB、YUV和YCbCr](http://blog.sina.com.cn/s/blog_a85e142101010h8n.html)
