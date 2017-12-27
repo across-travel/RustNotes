@@ -20,6 +20,8 @@ Manifest中的 launchMode 属性指定有关应如何将 Activity 启动到任�
 默认。系统在启动 Activity 的任务中创建 Activity 的新实例并向其传送 Intent。Activity 可以多次实例化，而每个实例均可属于不同的任务，并且一个任务可以拥有多个实例。
 
 ##### "singleTop"
+> 可以有多个实例，但是不允许多个相同Activity叠加。即，如果Activity在栈顶的时候，启动相同的Activity，不会创建新的实例，而会调用其onNewIntent方法。
+
 目标作用是在栈顶添加activity实例或走栈顶activity的`onNewIntent()` 方法。若目标activity已在栈顶，则不会新建实例。
 
 如果当前任务的顶部已存在 Activity 的一个实例，则系统会通过调用该实例的 onNewIntent() 方法向其传送 Intent，而不是创建 Activity 的新实例。Activity 可以多次实例化，而每个实例均可属于不同的任务，并且一个任务可以拥有多个实例（但前提是位于返回栈顶部的 Activity 并不是 Activity 的现有实例）。
@@ -29,6 +31,8 @@ Manifest中的 launchMode 属性指定有关应如何将 Activity 启动到任�
 注：为某个 Activity 创建新实例时，用户可以按“返回”按钮返回到前一个 Activity。 但是，当 Activity 的现有实例处理新 Intent 时，则在新 Intent 到达 onNewIntent() 之前，用户无法按“返回”按钮返回到 Activity 的状态。
 
 ##### "singleTask"
+> 只有一个实例。在同一个应用程序中启动他的时候，若Activity不存在，则会在当前task创建一个新的实例，若存在，则会把task中在其之上的其它Activity destory掉并调用它的onNewIntent方法。
+
 若目标activity已在栈中，则会销毁在目标activity之上的其他实例，此时目标activity来到栈顶。  
 
 若目标activity是 “MAIN” activity，能被Launcher启动。那么按home键将App退到后台，在桌面上点击App图标。目标activity之上的页面都会被销毁掉，并调用目标activity的`onNewIntent()`方法。
@@ -38,7 +42,7 @@ Manifest中的 launchMode 属性指定有关应如何将 Activity 启动到任�
 注：尽管 Activity 在新任务中启动，但是用户按“返回”按钮仍会返回到前一个 Activity。
 
 ##### "singleInstance"
-会启动新的task，栈里只有一个activity存在
+> 只有一个实例，并且这个实例独立运行在一个task中，这个task只有这个实例，不允许有别的Activity存在。
 
 与 "singleTask" 相同，只是系统不会将任何其他 Activity 启动到包含实例的任务中。该 Activity 始终是其任务唯一仅有的成员；由此 Activity 启动的任何 Activity 均在单独的任务中打开。
 
