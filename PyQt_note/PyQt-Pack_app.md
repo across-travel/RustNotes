@@ -102,3 +102,10 @@ import os
 
 sys.path.append(os.getcwd())  # Prepare path
 ```
+
+找不到模块，一般会报 `ImportError: No module named 'xxx'` 错误  
+此时一般是找不到我们自己写的模块。
+```python
+from my_package.ui_main import Ui_MainWindow  # 显示指定了my_package 打包得到的exe会找不到这个包
+from my_widget import DragInWidget  # 不显示指定package  否则打包得到的exe会找不到包而无法运行
+```
