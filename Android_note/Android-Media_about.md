@@ -2,6 +2,7 @@
 title: Android 编解码 MediaCodec, Image
 date: 2017-12-20 20:59:14
 category: Android_note
+toc: true
 ---
 
 
@@ -204,6 +205,27 @@ Image类在Android API21及以后功能十分强大。
         yuvImage.compressToJpeg(rect, 100, outStream);
     }
 ```
+
+### NV21转bitmap的方法
+直接存入文件
+```java
+FileOutputStream fos = new FileOutputStream(Environment.getExternalStorageDirectory() + "/imagename.jpg");
+YuvImage yuvImage = new YuvImage(nv21bytearray, ImageFormat.NV21, width, height, null);
+yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, fos);
+fos.close();
+```
+
+获得Bitmap对象的方法，这个方法耗时耗内存  
+NV21 -> yuvImage -> jpeg -> bitmap
+```java
+YuvImage yuvImage = new YuvImage(nv21bytearray, ImageFormat.NV21, width, height, null);
+ByteArrayOutputStream os = new ByteArrayOutputStream();
+yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, os);
+byte[] jpegByteArray = os.toByteArray();
+Bitmap bitmap = BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.length);
+```
+
+参考 https://stackoverflow.com/questions/32276522/convert-nv21-byte-array-into-bitmap-readable-format
 
 ## 参考资料
 
