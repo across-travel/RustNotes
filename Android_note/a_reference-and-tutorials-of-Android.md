@@ -26,6 +26,11 @@ toc: true
 
 ------
 
+## 基础知识点
+- [ ] hashmap原理
+- [ ] concurrenthashmap原理
+- [ ] java.nio
+
 ## Android 组件，机制，框架，调优，debug和源码学习
 https://www.gitbook.com/book/izobs/android-framework-development-guide
 
@@ -67,11 +72,15 @@ https://www.gitbook.com/book/izobs/android-framework-development-guide
 * [Android Handler 机制 - Looper，Message，MessageQueue - RustFisher](http://rustfisher.github.io/2017/06/07/Android_note/Android-Handler/)
 * [Android Handler可能会造成内存泄漏以及应对方法 - RustFisher](http://rustfisher.github.io/2015/10/07/Android_note/Android-Handler_may_leak_memory/)
 
-### View，自定义view，view分析
+### UI View 分析
 * [Android 自定义SurfaceView - RustFisher](http://rustfisher.github.io/2016/10/28/Android_note/Android-Custom_surface_view/)
 * [Android View 事件分发机制](http://www.cnblogs.com/linjzong/p/4191891.html)
 
-- [ ] view绘制流程
+- [ ] view绘制流程 一张图片是怎么显示出来的
+- [ ] bitmap占用内存大小
+- [ ] 布局的选择，布局层级的选择
+- [ ] 刷新卡顿的具体原因
+- [ ] 触摸事件描述  解决触摸事件冲突
 
 ### NDK
 * [Android NDK 初步配置 - RustFisher](http://rustfisher.github.io/2016/06/14/Android_note/Android-NDK_Getting_Started/)
@@ -113,7 +122,7 @@ https://github.com/leandromoreira/digital_video_introduction/blob/master/simplif
 * 《Android音频开发》：http://ticktick.blog.51cto.com/823160/d-15
 * 《FFMPEG Tips》：http://ticktick.blog.51cto.com/823160/d-17
 * 《Learn OpenGL 中文》：https://learnopengl-cn.readthedocs.io/zh/latest/
-* 《Android Graphic https://source.android.com/devices/graphics/
+* Android Graphic https://source.android.com/devices/graphics/
 
 #### 音视频从入门到提高 - 任务列表
 1. 在 Android 平台绘制一张图片，使用至少 3 种不同的 API，ImageView，SurfaceView，自定义 View
