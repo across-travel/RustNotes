@@ -2,6 +2,7 @@
 title: Android 使用OpenCV - 将OpenCV相关库做成模块形式
 date: 2017-12-22 16:59:14
 category: Android_note
+toc: true
 ---
 
 * win7
@@ -74,6 +75,82 @@ android {
 至此，OpenCV相关库已经成了一个Android Studio的模块
 
 在App中调用，添加模块依赖后，调用`OpenCVLoader.initDebug()`进行初始化
+
+
+## 使用OpenCV模块的例子
+实现一个识别的功能，预先准备好特征文件hand.xml，放到手机存储根目录
+
+在工程中先加载并初始化模块
+```java
+    // OpenCV库静态加载并初始化
+    private void staticLoadCVLibraries() {
+        boolean load = OpenCVLoader.initDebug();
+        if (load) {
+            Log.i(TAG, "Open CV Libraries loaded...");
+        }
+    }
+```
+
+加载后初始化相关对象
+```java
+    private Bitmap mSelectedBitmap;  // 选中的bitmap
+    CascadeClassifier mCHandCascade;
+    private String mHandXMLPath = Environment.getExternalStorageDirectory() + File.separator + "hand.xml";
+    
+    // 初始化
+    private void initCVUtils() {
+        File xmlFile = new File(mHandXMLPath);
+        Log.d(TAG, "xmlFile.exists: " + xmlFile.exists());
+
+        mCHandCascade = new CascadeClassifier(mHandXMLPath);
+        Log.d(TAG, "mCHandCascade: " + mCHandCascade.toString());
+    }
+```
+在图片中识别特定物体。利用模块提供的方法，将bitmap转换成mat。
+```java
+    private void detectObject() {
+        Mat src = new Mat();
+        Utils.bitmapToMat(mSelectedBitmap, src); // bitmap转成mat
+        handGestureRecognition(src);
+    }
+    private void handGestureRecognition(Mat srcFrame) {
+        Log.d(TAG, "Try to detect hand srcFrame: " + srcFrame);
+        MatOfRect hands = new MatOfRect();
+        Mat frame_gray = new Mat();
+
+        Imgproc.cvtColor(srcFrame, frame_gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.equalizeHist(frame_gray, frame_gray);
+
+        mCHandCascade.detectMultiScale(frame_gray, hands); // Detect hand
+//        mCHandCascade.detectMultiScale(frame_gray, hands, 1.1, 2, Objdetect.CASCADE_DO_CANNY_PRUNING,
+//                new Size(20, 20), new Size(2000, 2000));
+        mCHandCascade.detectMultiScale(frame_gray, hands);
+        for (Rect rect : hands.toList()) {
+            Log.d(TAG, "handGestureRecognition: " + rect);
+        }
+        Log.d(TAG, "Try to detect hand - END");
+    }
+```
+识别计算的耗时与若输入的图片尺寸正相关。
+
+裁剪bitmap的相关方法
+```java
+    public static Bitmap.createBitmap(@NonNull Bitmap source, int x, int y, int width, int height,
+            @Nullable Matrix m, boolean filter){...}
+    /**
+     * 裁剪
+     *
+     * @param bitmap 原图
+     * @return 裁剪后的图像
+     */
+    private Bitmap cropBitmap(Bitmap bitmap) {
+        int w = bitmap.getWidth(); // 得到图片的宽，高
+        int h = bitmap.getHeight();
+        int cropWidth = w / 3;
+        int cropHeight = h / 3;
+        return Bitmap.createBitmap(bitmap, w / 3, h / 3, cropWidth, cropHeight, null, false);
+    }
+```
 
 ## 参考资料
 

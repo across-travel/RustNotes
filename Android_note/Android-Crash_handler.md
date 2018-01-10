@@ -4,7 +4,12 @@ date: 2017-12-26 20:11:13
 category: Android_note
 ---
 
-App异常崩溃信息存入文件中
+App异常崩溃信息存入文件中。  
+应用崩溃时，尽可能的收集多的数据，方便后续定位追踪修改。  
+如果可以，尽量将崩溃日志上传到服务器。一些集成服务已经提供了相应的功能。
+
+主要使用的方法是`Thread.UncaughtExceptionHandler`  
+一般在application中启动`CrashHandler`，个人认为应该放在调用其他模块前尽早启动。
 
 `CrashHandler.java`
 ```java
