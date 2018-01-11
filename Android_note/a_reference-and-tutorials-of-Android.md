@@ -26,11 +26,6 @@ toc: true
 
 ------
 
-## 基础知识点
-- [ ] hashmap原理
-- [ ] concurrenthashmap原理
-- [ ] java.nio
-
 ## Android 组件，机制，框架，调优，debug和源码学习
 https://www.gitbook.com/book/izobs/android-framework-development-guide
 
@@ -76,12 +71,6 @@ https://www.gitbook.com/book/izobs/android-framework-development-guide
 * [Android 自定义SurfaceView - RustFisher](http://rustfisher.github.io/2016/10/28/Android_note/Android-Custom_surface_view/)
 * [Android View 事件分发机制](http://www.cnblogs.com/linjzong/p/4191891.html)
 
-- [ ] view绘制流程 一张图片是怎么显示出来的
-- [ ] bitmap占用内存大小
-- [ ] 布局的选择，布局层级的选择
-- [ ] 刷新卡顿的具体原因
-- [ ] 触摸事件描述  解决触摸事件冲突
-
 ### NDK
 * [Android NDK 初步配置 - RustFisher](http://rustfisher.github.io/2016/06/14/Android_note/Android-NDK_Getting_Started/)
 * [Android NDK 示例-返回字符串，数组，Java对象；兼容性问题 - RustFisher](http://rustfisher.github.io/2016/08/02/Android_note/Android-NDK_first_example/)
@@ -96,24 +85,14 @@ https://www.gitbook.com/book/izobs/android-framework-development-guide
 * [Android性能与优化 龚振杰](https://yq.aliyun.com/articles/73518?spm=5176.100240.searchblog.8.DKrFCO)
 从编码习惯到编译发布和工具参考，作者给出了很多关于Android应用开发的建议。
 
-- [ ] Listview性能调优
-
 ### Android框架解析，源码学习
 * [Android Volley 使用与源码解析 - RustFisher](http://rustfisher.github.io/2015/08/03/Android_note/Android-volley/)
-
-- [ ] okhttp原理
-- [ ] Glide原理
-- [ ] Retrofit原理
-- [ ] Andorid 一张图片的显示过程
 
 ### Android OpenGL ES
 * 使用OpenGL的Android库 https://github.com/Rajawali/Rajawali 
 * 关于OpenGL http://www.learnopengles.com/android-lesson-one-getting-started/
 * 讲解Opengl http://www.songho.ca/opengl/index.html
 * Vulkan https://developer.android.com/ndk/guides/graphics/getting-started.html#downloading
-
-### 设计思想，编程风格
-- [ ] MVC，MVP与MVVM在Android中的应用
 
 ### Android 音视频从入门到提高
 * 解释数字视频技术
@@ -123,45 +102,6 @@ https://github.com/leandromoreira/digital_video_introduction/blob/master/simplif
 * 《FFMPEG Tips》：http://ticktick.blog.51cto.com/823160/d-17
 * 《Learn OpenGL 中文》：https://learnopengl-cn.readthedocs.io/zh/latest/
 * Android Graphic https://source.android.com/devices/graphics/
-
-#### 音视频从入门到提高 - 任务列表
-1. 在 Android 平台绘制一张图片，使用至少 3 种不同的 API，ImageView，SurfaceView，自定义 View
-
-2. 在 Android 平台使用 AudioRecord 和 AudioTrack API 完成音频 PCM 数据的采集和播放，并实现读写音频 wav 文件
-
-3. 在 Android 平台使用 Camera API 进行视频的采集，分别使用 SurfaceView、TextureView 来预览 Camera 数据，取到 NV21 的数据回调
-
-4. 学习 Android 平台的 MediaExtractor 和 MediaMuxer API，知道如何解析和封装 mp4 文件
-
-5. 学习 Android 平台 OpenGL ES API，了解 OpenGL 开发的基本流程，使用 OpenGL 绘制一个三角形
-
-6. 学习 Android 平台 OpenGL ES API，学习纹理绘制，能够使用 OpenGL 显示一张图片
-
-7. 学习 MediaCodec API，完成音频 AAC 硬编、硬解
-
-8. 学习 MediaCodec API，完成视频 H.264 的硬编、硬解
-
-9. 串联整个音视频录制流程，完成音视频的采集、编码、封包成 mp4 输出
-
-10. 串联整个音视频播放流程，完成 mp4 的解析、音视频的解码、播放和渲染
-
-11. 进一步学习 OpenGL，了解如何实现视频的剪裁、旋转、水印、滤镜，并学习 OpenGL 高级特性，如：VBO，VAO，FBO 等等
-
-12. 学习 Android 图形图像架构，能够使用 GLSurfaceviw 绘制 Camera 预览画面
-
-13. 深入研究音视频相关的网络协议，如 rtmp，hls，以及封包格式，如：flv，mp4
-
-14. 深入学习一些音视频领域的开源项目，如 webrtc，ffmpeg，ijkplayer，librtmp 等等
-
-15. 将 ffmpeg 库移植到 Android 平台，结合上面积累的经验，编写一款简易的音视频播放器
-
-16. 将 x264 库移植到 Android 平台，结合上面积累的经验，完成视频数据 H264 软编功能
-
-17. 将 librtmp 库移植到 Android 平台，结合上面积累的经验，完成 Android RTMP 推流功能
-
-18. 上面积累的经验，做一款短视频 APP，完成如：断点拍摄、添加水印、本地转码、视频剪辑、视频拼接、MV 特效等功能
-
-------
 
 ## 参考资料网址
 
@@ -174,3 +114,37 @@ https://github.com/square/okio
 * alibaba VirtualLayout  
 https://github.com/alibaba/vlayout/blob/master/README-ch.md
 * Android MediaCodec stuff http://bigflake.com/mediacodec/
+
+# TODO
+- [ ] 基础 - hashmap原理
+- [ ] 基础 - concurrenthashmap原理
+- [ ] 基础 - java.nio
+- [ ] UI - view绘制流程 一张图片是怎么显示出来的
+- [ ] UI - bitmap占用内存大小
+- [ ] UI - 布局的选择，布局层级的选择
+- [ ] UI - 刷新卡顿的具体原因
+- [ ] UI - 触摸事件描述  解决触摸事件冲突
+- [ ] MVC，MVP与MVVM在Android中的应用
+- [ ] Listview性能调优
+- [ ] okhttp原理
+- [ ] Glide原理
+- [ ] Retrofit原理
+- [ ] Andorid 一张图片的显示过程
+- [x] 1. 在 Android 平台绘制一张图片，使用至少 3 种不同的 API，ImageView，SurfaceView，自定义 View
+- [ ] 2. 在 Android 平台使用 AudioRecord 和 AudioTrack API 完成音频 PCM 数据的采集和播放，并实现读写音频 wav 文件
+- [ ] 3. 在 Android 平台使用 Camera API 进行视频的采集，分别使用 SurfaceView、TextureView 来预览 Camera 数据，取到 NV21 的数据回调
+- [ ] 4. 学习 Android 平台的 MediaExtractor 和 MediaMuxer API，知道如何解析和封装 mp4 文件
+- [ ] 5. 学习 Android 平台 OpenGL ES API，了解 OpenGL 开发的基本流程，使用 OpenGL 绘制一个三角形
+- [ ] 6. 学习 Android 平台 OpenGL ES API，学习纹理绘制，能够使用 OpenGL 显示一张图片
+- [ ] 7. 学习 MediaCodec API，完成音频 AAC 硬编、硬解
+- [ ] 8. 学习 MediaCodec API，完成视频 H.264 的硬编、硬解
+- [ ] 9. 串联整个音视频录制流程，完成音视频的采集、编码、封包成 mp4 输出
+- [ ] 10. 串联整个音视频播放流程，完成 mp4 的解析、音视频的解码、播放和渲染
+- [ ] 11. 进一步学习 OpenGL，了解如何实现视频的剪裁、旋转、水印、滤镜，并学习 OpenGL 高级特性，如：VBO，VAO，FBO 等等
+- [ ] 12. 学习 Android 图形图像架构，能够使用 GLSurfaceviw 绘制 Camera 预览画面
+- [ ] 13. 深入研究音视频相关的网络协议，如 rtmp，hls，以及封包格式，如：flv，mp4
+- [ ] 14. 深入学习一些音视频领域的开源项目，如 webrtc，ffmpeg，ijkplayer，librtmp 等等
+- [ ] 15. 将 ffmpeg 库移植到 Android 平台，结合上面积累的经验，编写一款简易的音视频播放器
+- [ ] 16. 将 x264 库移植到 Android 平台，结合上面积累的经验，完成视频数据 H264 软编功能
+- [ ] 17. 将 librtmp 库移植到 Android 平台，结合上面积累的经验，完成 Android RTMP 推流功能
+- [ ] 18. 上面积累的经验，做一款短视频 APP，完成如：断点拍摄、添加水印、本地转码、视频剪辑、视频拼接、MV 特效等功能
