@@ -1,6 +1,7 @@
 ---
 title: H264相关
 date: 2017-12-25 16:12:33
+category: multimedia
 ---
 
 ## H264码流中SPS PPS
