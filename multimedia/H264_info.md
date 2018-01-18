@@ -1,10 +1,13 @@
 ---
-title: H264相关
+title: H.264相关
 date: 2017-12-25 16:12:33
 category: multimedia
 ---
 
-## H264码流中SPS PPS
+H.264，又称为MPEG-4第10部分，高级视频编码是一种面向块，基于运动补偿的视频编码标准。
+到2014年，它已经成为高精度视频录制、压缩和发布的最常用格式之一。
+
+## H.264码流中SPS PPS
 SPS Sequence Paramater Set，又称作序列参数集。
 PPS Picture Paramater Set，图像参数集。
 
@@ -16,6 +19,6 @@ PPS Picture Paramater Set，图像参数集。
 ```
 
 ## 参考
-* [H264码流中SPS PPS详解 - DaveBobo](https://zhuanlan.zhihu.com/p/27896239)
+* [H.264码流中SPS PPS详解 - DaveBobo](https://zhuanlan.zhihu.com/p/27896239)
 * [H.264先进的视频编译码标准 - CSDN](http://blog.csdn.net/gl1987807/article/details/11945357)
 * [RGB、YUV和YCbCr](http://blog.sina.com.cn/s/blog_a85e142101010h8n.html)
