@@ -5,76 +5,236 @@ category: Android_note
 toc: true
 ---
 
+使用MediaCodec进行编解码。输入H.264格式的数据，输出帧数据并发送给监听器。  
+创建并配置codec。配置codec时，若手动创建MediaFormat对象的话，一定要记得**设置"csd-0"和"csd-1"这两个参数**。  
+"csd-0"和"csd-1"这两个参数一定要和接收到的帧对应上。  
 
-**注意，如果手动创建MediaFormat对象的话，一定要记得设置"csd-0"和"csd-1"这两个参数：**
+输入数据  
+给codec输入数据时，如果对输入数据进行排队，需要检查排队队列的情况。  
+例如一帧数据暂用1M内存，1秒30帧，排队队列有可能会暂用30M的内存。当内存暂用过高，我们需要采取一定的措施来减小内存占用。  
+codec硬解码时会受到手机硬件的影响。若手机性能不佳，编解码的速度有可能慢于原始数据输入。不得已的情况我们可以将排队中的旧数据抛弃，输入新数据。  
 
-"csd-0"和"csd-1"这两个参数一定要和接收到的帧对应上。
+解码器性能  
+对视频实时性要求高的场景，codec没有可用的输入缓冲区，`mCodec.dequeueInputBuffer`返回-1。  
+为了实时性，这里会强制释放掉输入输出缓冲区`mCodec.flush()`。  
+
+这一个例子使用同步方式进行编解码
 ```java
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
+/**
+ * 解码器
+ */
+public class CodecDecoder {
+    private static final String TAG = "CodecDecoder";
 
-    private static final int COLOR_FormatI420 = 1; // 自定义的格式类型
-    private static final int COLOR_FormatNV21 = 2;
+    private static final String MIME_TYPE = "video/avc";
+    private static final String CSD0 = "csd-0";
+    private static final String CSD1 = "csd-1";
 
-    public static final String MIME_TYPE = "video/avc";
-    public static final String CSD0 = "csd-0";
-    public static final String CSD1 = "csd-1";
-    private static final byte[] SPS = { (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x67 /* 基于协议 */};
-    private static final byte[] PPS = { (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x68 /* 基于协议 */};
-    private MediaCodec mediaCodec;
+    private static final int TIME_INTERNAL = 1;
+    private static final int DECODER_TIME_INTERNAL = 1;
 
-    /**
-    * 实例化MediaCodec
-    */
-    public void initMediaCodec() {
-        mediaCodec = MediaCodec.createDecoderByType(MIME_TYPE);
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(
-                MIME_TYPE, width, height);
-        mediaFormat.setByteBuffer(CSD0, ByteBuffer.wrap(SPS));
-        mediaFormat.setByteBuffer(CSD1, ByteBuffer.wrap(PPS));
+    private MediaCodec mCodec;
+    private long mCount = 0; // 媒体解码器MediaCodec用的
+    private long mDequeCount = 0; // 解码时候用的时间戳
+
+    // 送入编解码器前的缓冲队列
+    // 需要实时监控这个队列所暂用的内存情况  在这里堵塞的话很容易引起OOM
+    private Queue<byte[]> data = null;
+
+    private DecoderThread decoderThread;
+    private CodecListener listener; // 自定义的监听器  当解码得到帧数据时通过它发送出去
+
+    public CodecDecoder() {
+        data = new ConcurrentLinkedQueue<>();
+    }
+
+    public boolean isCodecCreated() {
+        return mCodec!=null;
+    }
+
+    public boolean createCodec(CodecListener listener, byte[] spsBuffer, byte[] ppsBuffer, int width, int height) {
+        this.listener = listener;
+        try {
+            mCodec = MediaCodec.createDecoderByType(Constants.MIME_TYPE);
+            MediaFormat mediaFormat = createVideoFormat(spsBuffer, ppsBuffer, width, height);
+            mCodec.configure(mediaFormat, null, null, 0);
+            mCodec.start();
+
+            Log.d(TAG, "decoderThread mediaFormat in:" + mediaFormat);
+
+            decoderThread = new DecoderThread();
+            decoderThread.start();
+
+            return true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.e(TAG, "MediaCodec create error:" + e.getMessage());
+
+            return false;
+        }
+    }
+
+    private MediaFormat createVideoFormat(byte[] spsBuffer, byte[] ppsBuffer, int width, int height) {
+        MediaFormat mediaFormat;
+        mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
+        mediaFormat.setByteBuffer(CSD0, ByteBuffer.wrap(spsBuffer));
+        mediaFormat.setByteBuffer(CSD1, ByteBuffer.wrap(ppsBuffer));
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-        mediaCodec.configure(mediaFormat, null, null, 0);
-        mediaCodec.start();
+
+        return mediaFormat;
     }
 
-    private int TIME_INTERNAL = 30;
+    private long lastInQueueTime = 0;
 
-    /**
-     * 将数据添加到mediaCodec中，有一帧数据就放到识别方法中识别
-     *
-     * @param datas 添加到mediaCodec中
-     */
-    private void addDataToMediaC(byte[] datas) {
-        ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();
-        int inputBufferIndex = mediaCodec.dequeueInputBuffer(50);
-        if (inputBufferIndex >= 0) {
-            ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
-            inputBuffer.clear();
-            inputBuffer.put(datas, 0, datas.length);
-            mediaCodec.queueInputBuffer(inputBufferIndex, 0, datas.length, mCount
-                    * TIME_INTERNAL, 0);
-            mCount++;
-        }
-    }
-
-    private void findFrame() {
-        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-        int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 50);
-        while (outputBufferIndex >= 0) {
-            Image image = mediaCodec.getOutputImage(outputBufferIndex);
-            if (null != image) {
-                Log.d(TAG, "image.getFormat:" + image.getFormat());
-                final byte arr[] = getDataFromImage(image);
-                // 进行处理图片的操作
+    // 输入H.264帧数据  这里会监控排队情况
+    public void addData(byte[] dataBuffer) {
+        final long timeDiff = System.currentTimeMillis() - lastInQueueTime;
+        if (timeDiff > 1) {
+            lastInQueueTime = System.currentTimeMillis();
+            int queueSize = data.size(); // ConcurrentLinkedQueue查询长度时会遍历一次 在数据量巨大的情况下尽量少用这个方法
+            if (queueSize > 30) {
+                data.clear();
+                LogInFile.getLogger().e("frame queue 帧数据队列超出上限，自动清除数据 " + queueSize);
             }
-
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, true);
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+            data.add(dataBuffer.clone());
+            Log.e(TAG, "frame queue 添加一帧数据");
+        } else {
+            LogInFile.getLogger().e("frame queue 添加速度太快,跳过此帧. timeDiff=" + timeDiff);
         }
     }
 
+    public void destroyCodec() {
+        if (mCodec != null) {
+            try {
+                mCount = 0;
+
+                if(data!=null) {
+                    data.clear();
+                    data = null;
+                }
+
+                if(decoderThread!=null) {
+                    decoderThread.stopThread();
+                    decoderThread = null;
+                }
+
+                mCodec.release();
+                mCodec = null;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                Log.d(TAG, "destroyCodec exception:" + e.toString());
+            }
+        }
+    }
+
+    private class DecoderThread extends Thread {
+        private boolean isRunning;
+        public void stopThread() {
+            isRunning = false;
+        }
+
+        @Override
+        public void run() {
+            setName("CodecDecoder_DecoderThread-" + getId());
+            isRunning = true;
+            android.os.Process.setThreadPriority(12); // 尝试提高线程优先级
+            while (isRunning) {
+                try {
+                    if (data != null && !data.isEmpty()) {
+                        int inputBufferIndex = mCodec.dequeueInputBuffer(0);
+                        if (inputBufferIndex >= 0) {
+                            byte[] buf = data.poll();
+                            ByteBuffer inputBuffer = mCodec.getInputBuffer(inputBufferIndex);
+                            if (null != inputBuffer) {
+                                inputBuffer.clear();
+                                inputBuffer.put(buf, 0, buf.length);
+                                mCodec.queueInputBuffer(inputBufferIndex, 0,
+                                        buf.length, mCount * TIME_INTERNAL, 0);
+                                mCount++;
+                            }
+                        } else {
+                            // 编解码器输入缓冲区满了，在这里清除所有缓冲区
+                            mCount = 0;
+                            mDequeCount = 0;
+                            mCodec.flush();
+                        }
+                    }
+
+                    // Get output buffer index
+                    MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+                    int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, mDequeCount++);
+                    while (outputBufferIndex >= 0) {
+                        final int index = outputBufferIndex;
+                        Log.d(TAG, "releaseOutputBuffer " + Thread.currentThread().toString());
+                        final ByteBuffer outputBuffer = byteBufferClone(mCodec.getOutputBuffer(index));
+                        Image image = mCodec.getOutputImage(index);
+                        if (null != image) {
+                            // 获取NV21格式的数据
+                            final byte[] nv21 = ImageUtil.getDataFromImage(image, FaceDetectUtil.COLOR_FormatNV21);
+                            final int imageWid = image.getWidth();
+                            final int imageHei = image.getHeight();
+                            // 这里选择创建新的线程去发送数据 - 这是可优化的地方
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listener.onDataDecoded(outputBuffer,
+                                            mCodec.getOutputFormat().getInteger(MediaFormat.KEY_COLOR_FORMAT),
+                                            nv21, imageWid, imageHei);
+                                }
+                            }).start();
+                        } else {
+                            listener.onDataDecoded(outputBuffer,
+                                    mCodec.getOutputFormat().getInteger(MediaFormat.KEY_COLOR_FORMAT),
+                                    new byte[]{0}, 0, 0);
+                        }
+
+                        try {
+                            mCodec.releaseOutputBuffer(index, false);
+                        } catch (IllegalStateException ex) {
+                            android.util.Log.e(TAG, "releaseOutputBuffer ERROR", ex);
+                        }
+                        outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, mDequeCount++);
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "decoderThread exception:" + e.getMessage());
+                }
+
+                try {
+                    Thread.sleep(DECODER_TIME_INTERNAL);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // deep clone byteBuffer
+    private static ByteBuffer byteBufferClone(ByteBuffer buffer) {
+        if (buffer.remaining() == 0)
+            return ByteBuffer.wrap(new byte[]{0});
+
+        ByteBuffer clone = ByteBuffer.allocate(buffer.remaining());
+
+        if (buffer.hasArray()) {
+            System.arraycopy(buffer.array(), buffer.arrayOffset() + buffer.position(), clone.array(), 0, buffer.remaining());
+        } else {
+            clone.put(buffer.duplicate());
+            clone.flip();
+        }
+
+        return clone;
+    }
+}
+
+```
+
+一些工具函数。比如从image中取出NV21格式的数据。
+```java
     private byte[] getDataFromImage(Image image) {
         return getDataFromImage(image, COLOR_FormatNV21);
     }
