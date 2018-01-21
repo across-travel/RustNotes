@@ -14,6 +14,8 @@ toc: true
 例如一帧数据暂用1M内存，1秒30帧，排队队列有可能会暂用30M的内存。当内存暂用过高，我们需要采取一定的措施来减小内存占用。  
 codec硬解码时会受到手机硬件的影响。若手机性能不佳，编解码的速度有可能慢于原始数据输入。不得已的情况我们可以将排队中的旧数据抛弃，输入新数据。  
 
+问题：对于MediaCodec，输入数据和输出数据数量之间有没有特定的关系？假设输入10帧的数据，可以得到多少次输出？
+
 解码器性能  
 对视频实时性要求高的场景，codec没有可用的输入缓冲区，`mCodec.dequeueInputBuffer`返回-1。  
 为了实时性，这里会强制释放掉输入输出缓冲区`mCodec.flush()`。  
@@ -35,7 +37,6 @@ public class CodecDecoder {
 
     private MediaCodec mCodec;
     private long mCount = 0; // 媒体解码器MediaCodec用的
-    private long mDequeCount = 0; // 解码时候用的时间戳
 
     // 送入编解码器前的缓冲队列
     // 需要实时监控这个队列所暂用的内存情况  在这里堵塞的话很容易引起OOM
@@ -158,14 +159,13 @@ public class CodecDecoder {
                         } else {
                             // 编解码器输入缓冲区满了，在这里清除所有缓冲区
                             mCount = 0;
-                            mDequeCount = 0;
                             mCodec.flush();
                         }
                     }
 
                     // Get output buffer index
                     MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-                    int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, mDequeCount++);
+                    int outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 0);
                     while (outputBufferIndex >= 0) {
                         final int index = outputBufferIndex;
                         Log.d(TAG, "releaseOutputBuffer " + Thread.currentThread().toString());
@@ -196,7 +196,7 @@ public class CodecDecoder {
                         } catch (IllegalStateException ex) {
                             android.util.Log.e(TAG, "releaseOutputBuffer ERROR", ex);
                         }
-                        outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, mDequeCount++);
+                        outputBufferIndex = mCodec.dequeueOutputBuffer(bufferInfo, 0);
                     }
                 }
                 catch (Exception e) {
