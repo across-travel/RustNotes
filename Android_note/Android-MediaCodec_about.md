@@ -2,24 +2,39 @@
 title: Android 编解码 MediaCodec, Image
 date: 2017-12-20 20:59:14
 category: Android_note
-toc: true
 ---
 
+
+## Android MediaCodec 使用方式
 使用MediaCodec进行编解码。输入H.264格式的数据，输出帧数据并发送给监听器。  
+
+#### H.264的配置
 创建并配置codec。配置codec时，若手动创建MediaFormat对象的话，一定要记得**设置"csd-0"和"csd-1"这两个参数**。  
 "csd-0"和"csd-1"这两个参数一定要和接收到的帧对应上。  
 
-输入数据  
+#### 输入数据
 给codec输入数据时，如果对输入数据进行排队，需要检查排队队列的情况。  
 例如一帧数据暂用1M内存，1秒30帧，排队队列有可能会暂用30M的内存。当内存暂用过高，我们需要采取一定的措施来减小内存占用。  
 codec硬解码时会受到手机硬件的影响。若手机性能不佳，编解码的速度有可能慢于原始数据输入。不得已的情况我们可以将排队中的旧数据抛弃，输入新数据。  
 
-问题：对于MediaCodec，输入数据和输出数据数量之间有没有特定的关系？假设输入10帧的数据，可以得到多少次输出？
-
-解码器性能  
+#### 解码器性能
 对视频实时性要求高的场景，codec没有可用的输入缓冲区，`mCodec.dequeueInputBuffer`返回-1。  
 为了实时性，这里会强制释放掉输入输出缓冲区`mCodec.flush()`。  
 
+#### 问题1 - MediaCodec输入数据和输出数据数量之间有没有特定的关系
+对于MediaCodec，输入数据和输出数据数量之间有没有特定的关系？假设输入10帧的数据，可以得到多少次输出？
+
+实测发现，不能百分百保证输入输出次数是相等的。例如vivo x6 plus，输入30帧，能得到28帧结果。或者300次输入，得到298次输出。
+
+#### 异常1 - dequeueInputBuffer(0)一直返回-1
+某些手机长时间编解码后，可能会出现尝试获取codec输入缓冲区时下标一直返回-1。
+例如vivo x6 plus，运行约20分钟后，`mCodec.dequeueInputBuffer(0)`一直返回-1。
+
+处理方法：如果一直返回-1，同步方式下尝试调用`codec.flush()`方法，异步方式下尝试`codec.flush()`后再调用`codec.start()`方法。
+
+有一些手机解码速度太慢，有可能会经常返回-1。不要频繁调用`codec.flush()`，以免显示不正常。
+
+### 代码示例 - 同步方式进行编解码
 这一个例子使用同步方式进行编解码
 ```java
 /**
@@ -132,7 +147,10 @@ public class CodecDecoder {
     }
 
     private class DecoderThread extends Thread {
+        private final int INPUT_BUFFER_FULL_COUNT_MAX = 50;
         private boolean isRunning;
+        private int inputBufferFullCount = 0; // 输入缓冲区满了多少次
+
         public void stopThread() {
             isRunning = false;
         }
@@ -141,7 +159,6 @@ public class CodecDecoder {
         public void run() {
             setName("CodecDecoder_DecoderThread-" + getId());
             isRunning = true;
-            android.os.Process.setThreadPriority(12); // 尝试提高线程优先级
             while (isRunning) {
                 try {
                     if (data != null && !data.isEmpty()) {
@@ -156,10 +173,15 @@ public class CodecDecoder {
                                         buf.length, mCount * TIME_INTERNAL, 0);
                                 mCount++;
                             }
+                            inputBufferFullCount = 0; // 还有缓冲区可以用的时候重置计数
                         } else {
-                            // 编解码器输入缓冲区满了，在这里清除所有缓冲区
-                            mCount = 0;
-                            mCodec.flush();
+                            inputBufferFullCount++;
+                            LogInFile.getLogger().e(TAG, "decoderThread inputBuffer full.  inputBufferFullCount=" + inputBufferFullCount);
+                            if (inputBufferFullCount > INPUT_BUFFER_FULL_COUNT_MAX) {
+                                mCount = 0;
+                                mCodec.flush(); // 在这里清除所有缓冲区
+                                LogInFile.getLogger().e(TAG, "mCodec.flush()...");
+                            }
                         }
                     }
 
@@ -233,6 +255,7 @@ public class CodecDecoder {
 
 ```
 
+### 代码示例 - 工具函数
 一些工具函数。比如从image中取出NV21格式的数据。
 ```java
     private byte[] getDataFromImage(Image image) {
