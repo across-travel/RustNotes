@@ -116,9 +116,7 @@ https://github.com/alibaba/vlayout/blob/master/README-ch.md
 * Android MediaCodec stuff http://bigflake.com/mediacodec/
 
 # TODO
-- [ ] 基础 - hashmap原理
 - [ ] 基础 - concurrenthashmap原理
-- [ ] 基础 - java.nio
 - [ ] UI - view绘制流程 一张图片是怎么显示出来的
 - [ ] UI - bitmap占用内存大小
 - [ ] UI - 布局的选择，布局层级的选择

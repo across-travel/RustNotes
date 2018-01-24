@@ -1,5 +1,5 @@
 ---
-title: Java constructor
+title: Java constructor 构造器
 date: 2015-04-27 22:11:39
 category: Java_note
 tag: [Java]

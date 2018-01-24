@@ -7,8 +7,9 @@ toc: true
 ---
 
 
-jdk1.7.0_79 ；idea
-Thinking in Java 4th edition
+* jdk1.7.0_79
+* idea
+* *Thinking in Java 4th edition*
 
 ### 泛型
  -----
