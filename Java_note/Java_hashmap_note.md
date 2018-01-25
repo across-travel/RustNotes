@@ -1,5 +1,5 @@
 ---
-title: Java HashMap 简介与源码阅读
+title: Java HashMap 简介与工作原理
 date: 2018-01-24 20:42:30
 category: Java_note
 tag: [Java]
@@ -8,15 +8,18 @@ toc: true
 
 本文概要
 * HashMap 简介
-* HashMap 源码解析
+* HashMap 工作原理
     * 属性介绍
     * 方法介绍
+    * 数据的存储结构
+* 相关参考
 
 ### HashMap简介
 集是一个集合，它可以快速地查找现有的元素。
 映射表（Map）数据结构。映射表用来存放键值对。如果提供了键，就能查找到值。
 Java类库为映射表提供了两个通用的实现：HashMap和TreeMap。这两个类都实现了Map接口。
 
+HashMap采取的存储方式为：数组加链表和二叉树。  
 散列映射表对键进行散列，数映射表的整体顺序对元素进行排序，并将其组织成搜索树。
 散列或比较函数只能左右与键。与键关联的值不能进行散列或比较。
 
@@ -40,7 +43,7 @@ HashMap 的实现不是同步的，这意味着它不是线程安全的。它的
 装填因子是一个0.0~1.0之间的数值。这数值决定散列表填充的百分比。
 一旦到了这个百分比，就要将其再散列到更大的表中。默认装填因子是0.75。
 
-### HashMap源码解析
+### HashMap 工作原理
 * JDK 1.8
 
 HashMap 继承 AbstractMap，实现了Map、Cloneable、java.io.Serializable接口
@@ -74,12 +77,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 最大容量必须小于等于 1<<30 。若设置的容量大于最大容量，将其限制在最大容量。  
 `static final int MAXIMUM_CAPACITY = 1 << 30;`
 
-已存储的键值对数量
+已存储的键值对数量  
 `transient int size;`
 
 存储数据的数组。必要时会重新分配空间。长度永远是2的次方。不需要序列化。  
-它的长度会参与存入元素索引的计算  
-假设长度n为默认的16，那么通过`(n - 1) & hash`计算得到的索引范围是[0, 15]  
+它的长度会参与存入元素索引的计算。假设长度n为默认的16，那么通过`(n - 1) & hash`计算得到的索引范围是[0, 15]  
 `transient Node<K,V>[] table;`
 
 当存储的数量达到此值后，需要重新分配大小(capacity * load factor)  
@@ -90,6 +92,17 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
 此HashMap的结构被修改的次数  
 `transient int modCount;`
+
+table数组中存储的元素，是一个链表或者二叉树的根节点
+
+![list1](https://raw.githubusercontent.com/RustFisher/Rustnotes/master/java_note/pics/hashmap_internal_storage_list_1.png)
+
+
+超过此阈值，将某个元素的链表结构转换成树结构  
+`static final int TREEIFY_THRESHOLD = 8;`
+
+小于等于此阈值，将二叉树结构转换成链表结构  
+`static final int UNTREEIFY_THRESHOLD = 6;`
 
 带容量和装载因子的构造函数。检查输入的容量值，将其限制在0到最大容量之间。检查装载因子。
 ```java
@@ -158,7 +171,7 @@ LinkedHashMap用的回调
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict)
 ```
 
-实例 `HashMap<String, String>`
+实例 `HashMap<String, String>`初始化并调用put方法
 ```java
         HashMap<String, String> strMap = new HashMap<>();
         strMap.put("one", "value");
@@ -176,6 +189,16 @@ hash("three") = 110338829
 ```
 已知`"one"`的hash值是110183，通过`(n - 1) & hash`计算存储索引。
 默认容量n=16，计算得到索引是7。以此类推。
+
+#### `get` 方法流程
+计算输入key对象的hash值，根据hash值查找。
+若map中不存在相应的key，则返回null。
+```java
+    public V get(Object key) {
+        Node<K,V> e;
+        return (e = getNode(hash(key), key)) == null ? null : e.value;
+    }
+```
 
 #### 从源码中学到的实用方法
 求hash值的方法
@@ -202,3 +225,6 @@ hash("three") = 110338829
         return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
     }
 ```
+
+### 参考
+[Java HashMap 工作原理 - coding-geek](http://coding-geek.com/how-does-a-hashmap-work-in-java/)
