@@ -95,8 +95,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
 table数组中存储的元素，是一个链表或者二叉树的根节点
 
-![list1](https://raw.githubusercontent.com/RustFisher/Rustnotes/master/java_note/pics/hashmap_internal_storage_list_1.png)
-
+![list1](https://raw.githubusercontent.com/RustFisher/RustNotes/master/Java_note/pics/hashmap_internal_storage_list_1.png)
 
 超过此阈值，将某个元素的链表结构转换成树结构  
 `static final int TREEIFY_THRESHOLD = 8;`
